@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>节气知农平台</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233E6B4E'/%3E%3Ccircle cx='32' cy='32' r='21' fill='none' stroke='%23F5F0E6' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='8' fill='none' stroke='%23D9A441' stroke-width='2.5'/%3E%3Cpath d='M32 21 C32 27 32 30 32 32 M26 27 C29 27 30.5 28 32 29 M38 27 C35 27 33.5 28 32 29' stroke='%23F5F0E6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Crect x='47' y='47' width='9' height='9' rx='2' fill='%23C4552B'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;600;700&display=swap">
+<style>
+/* ============ 基础 ============ */
+:root{
+  --bg:#EFEBDF;          /* 手机内页面底色 */
+  --card:#FAF7EF;        /* 卡片米白 */
+  --line:#E4DCC9;        /* 分隔线 */
+  --ink:#2E2A24;         /* 主文字 墨褐 */
+  --ink2:#6E675A;        /* 次要文字 */
+  --ink3:#9A9182;        /* 弱文字 */
+  --green:#3E6B4E;       /* 稻田绿 */
+  --green2:#6B8F5A;      /* 叶绿 */
+  --leaf:#A8BE7E;        /* 浅叶绿 */
+  --orange:#C4552B;      /* 柿子橙红 强调 */
+  --amber:#D9A441;       /* 秋金黄 */
+  --serif:"Noto Serif SC","Songti SC","SimSun",serif;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:var(--sans);color:var(--ink);background:
+  radial-gradient(1200px 600px at 50% -10%, #DFE8D2 0%, #EFEBDF 55%, #E6E0CF 100%);
+  -webkit-font-smoothing:antialiased}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit}
+img{display:block;max-width:100%}
+
+/* ============ 手机外壳 ============ */
+.stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:26px 12px}
+.phone{
+  position:relative;width:390px;height:844px;max-width:100%;
+  background:var(--bg);border-radius:46px;overflow:hidden;
+  border:10px solid #1D1B16;
+  box-shadow:0 30px 60px rgba(46,42,36,.28),0 6px 16px rgba(46,42,36,.18);
+}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:148px;height:26px;
+  background:#1D1B16;border-radius:0 0 18px 18px;z-index:60;pointer-events:none}
+.statusbar{position:absolute;top:0;left:0;right:0;height:44px;z-index:55;
+  display:flex;align-items:center;justify-content:space-between;padding:0 26px;
+  color:var(--ink);font-size:13px;font-weight:600;letter-spacing:.2px;pointer-events:none}
+.sb-r{display:flex;align-items:center;gap:5px}
+.bat{display:inline-block;width:21px;height:10px;border:1.5px solid var(--ink);border-radius:3px;
+  position:relative}
+.bat::after{content:"";position:absolute;right:-3.5px;top:2px;width:2.5px;height:4px;
+  background:var(--ink);border-radius:0 2px 2px 0}
+.bat::before{content:"";position:absolute;inset:1.5px;background:var(--green);border-radius:1.5px}
+
+/* ============ 滚动区域与顶栏 ============ */
+#flow{position:absolute;top:44px;bottom:58px;left:0;right:0;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+#flow::-webkit-scrollbar{display:none}
+.topbar{position:sticky;top:0;z-index:45;display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px 6px;background:linear-gradient(var(--bg) 78%, rgba(239,235,223,0))}
+.loc{display:inline-flex;align-items:center;gap:5px;height:44px;padding:0 6px 0 2px;
+  border-radius:12px;font-size:14px;font-weight:600;color:var(--ink);
+  transition:background .2s}
+.loc:hover{background:rgba(62,107,78,.08)}
+.loc .ic{width:18px;height:18px;color:var(--green)}
+.loc .carat{width:13px;height:13px;color:var(--ink3);transition:transform .25s}
+.loc.open .carat{transform:rotate(180deg)}
+.bell{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;
+  border-radius:50%;background:var(--card);border:1px solid var(--line);transition:transform .15s}
+.bell:active{transform:scale(.92)}
+.bell .ic{width:20px;height:20px;color:var(--ink2)}
+.bell .dot{position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;
+  background:var(--orange);border:1.5px solid var(--card)}
+
+/* ============ 视图面板 ============ */
+.panel{display:none;padding:6px 14px 20px}
+.panel.on{display:block;animation:panIn .32s cubic-bezier(.22,.8,.32,1)}
+@keyframes panIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* 卡片通用 */
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;
+  box-shadow:0 6px 18px rgba(46,42,36,.05)}
+
+/* ============ 首页：hero 节气卡 ============ */
+.hero-card{position:relative;border-radius:22px;overflow:hidden;margin-top:4px;
+  border:1px solid rgba(62,107,78,.25);cursor:pointer}
+.hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero-scrim{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(20,26,18,.10) 0%,rgba(20,26,18,.18) 34%,rgba(16,20,14,.78) 100%)}
+.hero-in{position:relative;padding:16px 16px 14px;min-height:372px;display:flex;flex-direction:column;
+  justify-content:flex-end}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
+  font-size:11px;letter-spacing:1px;color:#F3EFE2;background:rgba(22,26,18,.34);
+  border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:5px 10px;margin-bottom:10px;
+  backdrop-filter:blur(4px)}
+.hero-tag b{color:var(--amber);font-weight:700}
+.hero-title{display:flex;align-items:flex-end;gap:10px}
+.hero-title h1{font-family:var(--serif);font-weight:900;font-size:52px;line-height:1;color:#FFFDF6;
+  text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.seal{width:34px;height:34px;border-radius:9px;background:var(--orange);color:#FFF;
+  display:flex;align-items:center;justify-content:center;font-family:var(--serif);
+  font-size:16px;font-weight:700;box-shadow:0 4px 10px rgba(196,85,43,.4);margin-bottom:6px;
+  transform:rotate(3deg)}
+.hero-py{margin:6px 0 4px;font-size:11px;letter-spacing:4.5px;color:var(--amber);font-weight:600}
+.hero-desc{margin:6px 0 12px;font-size:14px;line-height:1.7;color:#F2EEE0}
+.hero-chips{display:flex;flex-wrap:wrap;gap:8px}
+.hero-chips span{font-size:12px;color:#EFE9D8;background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:5px 12px;backdrop-filter:blur(3px)}
+.hero-toggle{display:inline-flex;align-items:center;gap:5px;margin-top:13px;align-self:flex-start;
+  font-size:12px;color:#EADFB8;font-family:var(--serif);letter-spacing:.5px;padding:7px 12px;
+  border-radius:999px;background:rgba(18,22,15,.32);border:1px solid rgba(255,255,255,.2);
+  transition:background .2s}
+.hero-toggle .arr{transition:transform .3s}
+.hero-card.exp .hero-toggle .arr{transform:rotate(180deg)}
+.sanhou{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.22,.8,.32,1),padding .45s}
+.hero-card.exp .sanhou{max-height:220px}
+.sanhou-in{padding:12px 0 0;border-top:1px dashed rgba(255,255,255,.28);margin-top:10px}
+.sanhou b{display:block;font-family:var(--serif);font-size:13px;color:var(--amber);margin-bottom:7px}
+.sanhou p{font-size:12.5px;line-height:1.85;color:#EDE7D4}
+
+/* ============ 首页：天气卡 ============ */
+.weather{margin-top:12px;padding:14px 15px;display:flex;align-items:center;gap:14px}
+.w-main{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
+.w-icon{width:46px;height:46px;flex-shrink:0;color:var(--amber)}
+.w-temp{font-size:30px;font-weight:700;letter-spacing:-1px;color:var(--ink);line-height:1}
+.w-cond{font-size:12.5px;color:var(--ink2);margin-top:3px}
+.w-hilo{font-size:11px;color:var(--ink3);margin-top:2px}
+.w-inds{display:flex;gap:0;border-left:1px solid var(--line);padding-left:12px;flex-shrink:0}
+.w-ind{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:48px}
+.w-ind .k{font-size:10px;color:var(--ink3)}
+.w-ind .v{font-size:12.5px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.w-tip{margin-top:10px;padding:10px 13px;border-radius:14px;background:rgba(62,107,78,.09);
+  border:1px dashed rgba(62,107,78,.35);font-size:12px;color:var(--green);line-height:1.6}
+.w-tip b{font-weight:700}
+
+/* ============ 首页：今日提醒 ============ */
+.task{margin-top:12px;padding:14px 15px;display:flex;align-items:center;gap:13px;cursor:pointer;
+  border:1px solid var(--line);border-radius:20px;background:var(--card);
+  box-shadow:0 6px 18px rgba(46,42,36,.05);transition:transform .15s}
+.task:active{transform:scale(.98)}
+.tic{width:44px;height:44px;border-radius:13px;background:var(--green);color:#FFF;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 10px rgba(62,107,78,.35)}
+.tic .ic{width:23px;height:23px}
+.task b{display:block;font-size:14.5px;color:var(--ink);line-height:1.35}
+.task p{font-size:11.5px;color:var(--ink3);margin-top:2px;line-height:1.5}
+.task .go{margin-left:auto;display:inline-flex;align-items:center;gap:3px;font-size:12px;
+  color:var(--orange);font-weight:600;white-space:nowrap;flex-shrink:0}
+.task .go::after{content:"›";font-size:15px}
+
+/* 任务明细 */
+.tasklist{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.trow{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-radius:14px;
+  background:var(--card);border:1px solid var(--line);font-size:13px;line-height:1.55}
+.trow::before{content:"";width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;
+  background:var(--orange)}
+.trow:nth-child(2)::before{background:var(--amber)}
+.trow .tg{margin-left:auto;flex-shrink:0;font-size:10px;color:var(--green);
+  background:rgba(62,107,78,.1);border-radius:999px;padding:2px 8px;margin-top:1px}
+
+/* ============ 区块标题 ============ */
+.sec-t{display:flex;align-items:baseline;justify-content:space-between;margin:20px 2px 11px}
+.sec-t h3{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink)}
+.sec-t span{font-size:11px;color:var(--ink3)}
+
+/* ============ 农事工具箱（独立页） ============ */
+.toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:4px}
+.tool{display:flex;flex-direction:column;gap:9px;padding:16px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:18px;text-align:left;
+  transition:transform .15s, box-shadow .15s}
+.tool:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(46,42,36,.08)}
+.tool:active{transform:scale(.97)}
+.tool .t-ic{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.tool b{font-size:13.5px;color:var(--ink);font-weight:600}
+.tool p{font-size:11px;color:var(--ink3);line-height:1.5}
+.tool .t-ic img{width:50px;height:50px;border-radius:14px;object-fit:cover;display:block}
+
+/* ============ 工具详情页 ============ */
+.detail{position:absolute;inset:44px 0 0;background:var(--bg);z-index:65;
+  transform:translateX(102%);transition:transform .36s cubic-bezier(.22,.8,.32,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.detail.on{transform:none}
+.detail-top{position:relative;z-index:5;display:flex;align-items:center;gap:10px;
+  padding:8px 14px;background:var(--bg);border-bottom:1px solid var(--line);flex-shrink:0}
+.detail-top .back{width:40px;height:40px;border-radius:50%;background:var(--card);
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink2)}
+.detail-top .back:active{transform:scale(.92)}
+.detail-top .back .ic{width:19px;height:19px}
+.detail-top b{font-family:var(--serif);font-size:16px;flex:1;text-align:left}
+.detail-top .d-region{font-size:11px;color:var(--green);background:rgba(62,107,78,.1);
+  border-radius:999px;padding:4px 10px}
+.detail-body{flex:1;overflow-y:auto;padding:6px 14px 28px;scrollbar-width:none}
+.detail-body::-webkit-scrollbar{display:none}
+.d-sec{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--ink);margin:16px 2px 10px}
+.d-sec:first-child{margin-top:10px}
+.d-hero{background:linear-gradient(140deg,#3E6B4E,#2F5340);border-radius:18px;padding:16px;color:#F2EEDF}
+.d-hero .big{font-family:var(--serif);font-size:20px;font-weight:700}
+.d-hero p{font-size:12px;color:#CDE0CE;margin-top:6px;line-height:1.7}
+.d-hero .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding:0}
+.d-hero .chips span{font-size:11px;color:#EFE9D8;background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:3px 10px}
+.seg{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:10px}
+.seg b{display:block;font-size:12.5px;color:var(--green);font-weight:700;margin-bottom:8px}
+.seg ul{list-style:none}
+.seg li{font-size:12.5px;color:var(--ink2);line-height:1.6;padding-left:16px;position:relative;margin-top:5px}
+.seg li::before{content:"";position:absolute;left:2px;top:8px;width:5px;height:5px;border-radius:50%;
+  background:var(--leaf)}
+.cam-btn{width:100%;padding:15px;border-radius:16px;background:var(--orange);color:#FFF;
+  font-size:14.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 8px 18px rgba(196,85,43,.3)}
+.cam-btn:active{transform:scale(.98)}
+.cam-btn .ic{width:21px;height:21px}
+.pest{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:10px}
+.pest .pt{display:flex;align-items:center;gap:8px}
+.pest .pt b{font-size:13.5px;color:var(--ink)}
+.pest .pt .tag{font-size:10px;color:var(--orange);background:rgba(196,85,43,.1);
+  border-radius:999px;padding:2px 8px}
+.pest .sym{font-size:12px;color:var(--ink2);margin-top:8px;line-height:1.65}
+.pest .sym b{color:var(--ink)}
+.pest .fix{margin-top:7px;font-size:11.5px;color:var(--green);line-height:1.65;
+  background:rgba(62,107,78,.07);border-radius:10px;padding:8px 10px}
+.pest .fix b{font-weight:700}
+.price-row{display:flex;align-items:center;gap:10px;padding:12px 13px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;margin-bottom:8px}
+.price-row.cur{border-color:rgba(62,107,78,.55);background:linear-gradient(135deg,#F2F6EB,#EAF0E0)}
+.price-row .nm{font-size:13px;font-weight:600;color:var(--ink)}
+.price-row .tag{font-size:10px;color:var(--ink3)}
+.price-row .pv{margin-left:auto;font-family:var(--serif);font-size:17px;font-weight:900;color:var(--orange)}
+.price-row .pv small{font-size:10.5px;color:var(--ink2);font-weight:600;font-family:var(--sans)}
+.price-row .chg{font-size:10.5px;color:var(--green)}
+.price-row.cur .pv{color:var(--green)}
+.btn-full{width:100%;padding:13px;border-radius:14px;background:var(--green);color:#FFF;
+  font-size:14px;font-weight:600;margin-top:6px}
+.btn-full:active{transform:scale(.98)}
+.field{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:10px;
+  cursor:pointer;transition:transform .15s}
+.field:active{transform:scale(.98)}
+.field .ft{display:flex;align-items:center;gap:8px}
+.field .ft b{font-size:13.5px}
+.field .ft .st{margin-left:auto;font-size:10px;color:#FFF;border-radius:999px;padding:3px 9px;
+  background:var(--green);flex-shrink:0}
+.field .ft .st.warn{background:var(--orange)}
+.field .ft .st.done{background:var(--green2)}
+.field p{font-size:12px;color:var(--ink2);margin-top:7px}
+.field .rec{font-size:11px;color:var(--ink3);margin-top:5px}
+.day{display:flex;align-items:center;gap:11px;padding:12px 13px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;margin-bottom:8px}
+.day b{font-size:12.5px;color:var(--ink);width:106px;flex-shrink:0}
+.day .cond{font-size:12px;color:var(--ink2);width:50px;flex-shrink:0}
+.day .tem{font-size:12.5px;color:var(--ink2);flex:1}
+.day .idx{font-size:11px;color:var(--green);background:rgba(62,107,78,.1);border-radius:999px;
+  padding:3px 9px;flex-shrink:0}
+.m-row{display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:15px;margin-bottom:9px;cursor:pointer}
+.m-row:active{transform:scale(.98)}
+.m-row .mi{width:42px;height:42px;border-radius:12px;background:rgba(62,107,78,.1);color:var(--green);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.m-row .mi .ic{width:22px;height:22px}
+.m-row b{font-size:13px;display:block}
+.m-row small{font-size:10.5px;color:var(--ink3)}
+.m-row .pm{margin-left:auto;text-align:right;flex-shrink:0}
+.m-row .pm b{font-size:13px;color:var(--orange)}
+.m-row .pm small{color:var(--green)}
+.s-row{display:flex;align-items:center;gap:11px;padding:13px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:15px;margin-bottom:9px;cursor:pointer}
+.s-row:active{transform:scale(.98)}
+.s-row b{font-size:13px;display:block}
+.s-row small{font-size:11px;color:var(--ink2);margin-top:2px;display:block}
+.s-row .st2{margin-left:auto;font-size:10.5px;color:var(--orange);border:1px solid rgba(196,85,43,.35);
+  border-radius:999px;padding:3px 9px;flex-shrink:0}
+.expert{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:15px;margin-bottom:9px;cursor:pointer}
+.expert:active{transform:scale(.98)}
+.expert .av{width:42px;height:42px;font-size:16px}
+.expert b{font-size:13.5px;display:block}
+.expert small{font-size:11px;color:var(--ink2);margin-top:2px;display:block}
+.expert .dot2{width:8px;height:8px;border-radius:50%;background:var(--green2);margin-left:auto;flex-shrink:0}
+.expert .dot2.off{background:var(--ink3)}
+.qa{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px}
+.qa textarea{width:100%;height:74px;border:1px solid var(--line);border-radius:12px;background:#FFFDF6;
+  padding:11px;font-family:inherit;font-size:12.5px;color:var(--ink);resize:none;outline:none}
+.qa textarea:focus{border-color:var(--green2)}
+.qa .send{margin-top:9px;width:100%;padding:12px;border-radius:12px;background:var(--green);color:#FFF;
+  font-size:13.5px;font-weight:600}
+.qa .send:active{transform:scale(.98)}
+.sup-row{display:flex;align-items:center;gap:11px;padding:12px 13px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer}
+.sup-row:active{transform:scale(.98)}
+.sup-row b{font-size:13px;display:block}
+.sup-row small{font-size:10.5px;color:var(--ink3);display:block;margin-top:2px}
+.sup-row .sp{margin-left:auto;text-align:right;flex-shrink:0}
+.sup-row .sp b{font-size:13px;color:var(--orange)}
+.sup-row .sp small{font-size:10px;color:var(--green)}
+
+/* ============ 产销对接 ============ */
+.trade{margin-top:12px;padding:15px 16px;display:flex;align-items:center;gap:14px;
+  background:linear-gradient(135deg,#F7F1E2 0%,#FBF7EE 60%,#F5EBD8 100%);
+  border:1px solid #EADFB8;border-radius:20px;cursor:pointer;
+  box-shadow:0 6px 18px rgba(46,42,36,.05);transition:transform .15s}
+.trade:active{transform:scale(.98)}
+.trade .t-ic{width:44px;height:44px;border-radius:13px;background:var(--amber);color:#FFF;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.trade .t-ic .ic{width:23px;height:23px}
+.trade b{display:block;font-size:13px;color:var(--ink2);font-weight:600}
+.trade .price{font-family:var(--serif);font-size:20px;font-weight:900;color:var(--orange);
+  margin-top:2px}
+.trade .price small{font-size:12px;font-weight:600;color:var(--ink2);font-family:var(--sans)}
+.trade .chg{display:inline-flex;align-items:center;gap:2px;font-size:11px;color:var(--green);
+  background:rgba(62,107,78,.1);border-radius:999px;padding:2px 8px;margin-left:6px}
+.trade .t-go{margin-left:auto;text-align:right;flex-shrink:0}
+.trade .t-go span{font-size:12px;color:var(--orange);font-weight:600}
+.trade .t-go .m{font-size:10px;color:var(--ink3);margin-top:4px}
+
+/* ============ 节气列表 ============ */
+.rail{display:flex;flex-direction:column;gap:9px}
+.jq{display:flex;align-items:center;gap:13px;padding:13px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:16px}
+.jq.next{border-color:rgba(62,107,78,.4);background:linear-gradient(135deg,#F4F6EE,#EAF0E0);
+  box-shadow:0 6px 16px rgba(62,107,78,.1)}
+.jq .date{width:86px;flex-shrink:0;font-size:11px;color:var(--ink3);line-height:1.45}
+.jq.next .date{color:var(--green)}
+.jq .nm{font-family:var(--serif);font-size:19px;font-weight:700;width:52px;flex-shrink:0;color:var(--ink)}
+.jq.next .nm{color:var(--green)}
+.jq .desc{font-size:12px;color:var(--ink2);line-height:1.55;flex:1}
+.jq .badge{font-size:10px;color:#FFF;background:var(--green);border-radius:999px;padding:2px 9px;
+  flex-shrink:0}
+
+/* ============ 老乡圈 ============ */
+.rows{display:flex;flex-direction:column;gap:9px}
+.row{display:flex;gap:11px;align-items:flex-start;padding:12px 13px;background:var(--card);
+  border:1px solid var(--line);border-radius:16px}
+.av{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-family:var(--serif);font-size:16px;font-weight:700;color:#FFF}
+.av.g1{background:linear-gradient(135deg,#5B8A63,#3E6B4E)}
+.av.g2{background:linear-gradient(135deg,#D9A441,#B87F22)}
+.av.g3{background:linear-gradient(135deg,#C4552B,#9C3E1F)}
+.av.g4{background:linear-gradient(135deg,#6B8F5A,#4C6B42)}
+.av.g5{background:linear-gradient(135deg,#8A7B5A,#6B5D3F)}
+.row .who{font-size:12.5px;font-weight:600;color:var(--ink)}
+.row .tt{font-family:var(--serif);font-size:13.5px;color:var(--ink);margin-top:5px;line-height:1.6}
+.row .like{font-size:11px;color:var(--ink3);margin-top:6px}
+
+/* ============ 学堂 ============ */
+.course-top{margin-top:4px;padding:13px 14px;display:flex;align-items:center;gap:12px;
+  background:linear-gradient(135deg,#EEF3E4,#F7F1E2);border:1px solid #DDE6CB;border-radius:18px;
+  cursor:pointer}
+.course-top .ct-img{width:66px;height:66px;border-radius:14px;object-fit:cover;flex-shrink:0}
+.course-top b{font-family:var(--serif);font-size:14px;color:var(--ink);line-height:1.45;display:block}
+.course-top p{font-size:11px;color:var(--green);margin-top:4px;font-weight:600}
+.course-top .tagline{font-size:10.5px;color:var(--ink3);margin-top:3px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex-shrink:0;font-size:12.5px;color:var(--ink2);padding:8px 16px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);transition:all .2s}
+.chips button.on{color:#FFF;background:var(--green);border-color:var(--green);
+  box-shadow:0 4px 10px rgba(62,107,78,.3)}
+.courses{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.course{display:flex;align-items:center;gap:12px;padding:11px 12px;background:var(--card);
+  border:1px solid var(--line);border-radius:16px;cursor:pointer;transition:transform .15s}
+.course:active{transform:scale(.98)}
+.course img{width:62px;height:62px;border-radius:13px;object-fit:cover;flex-shrink:0}
+.course .b{flex:1;min-width:0}
+.course .b b{font-family:var(--serif);font-size:13.5px;color:var(--ink);line-height:1.45;display:block}
+.course .b p{font-size:11px;color:var(--ink3);margin-top:3px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.course .dur{flex-shrink:0;font-size:10.5px;color:var(--green);background:rgba(62,107,78,.1);
+  border-radius:999px;padding:4px 9px;font-weight:600}
+.empty{padding:34px 0;text-align:center;font-size:12.5px;color:var(--ink3)}
+
+/* ============ 我的 ============ */
+.me-card{margin-top:4px;padding:18px 16px;background:linear-gradient(140deg,#3E6B4E,#2F5340);
+  border-radius:20px;color:#F2EEDF;box-shadow:0 10px 22px rgba(62,107,78,.3)}
+.me-top{display:flex;align-items:center;gap:13px}
+.me-top .av{width:48px;height:48px;font-size:19px;background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.3)}
+.me-top b{font-family:var(--serif);font-size:17px;display:block}
+.me-top p{font-size:11.5px;color:#CDE0CE;margin-top:3px}
+.me-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#FFE9C2;
+  background:rgba(217,164,65,.22);border:1px solid rgba(217,164,65,.4);border-radius:999px;
+  padding:2px 8px;margin-left:7px}
+.me-stats{display:flex;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16)}
+.me-stats>div{flex:1;text-align:center}
+.me-stats b{font-family:var(--serif);font-size:21px;display:block}
+.me-stats span{font-size:11px;color:#CDE0CE}
+.mlist{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.mrow{display:flex;align-items:center;gap:12px;padding:14px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:16px;cursor:pointer;transition:transform .15s}
+.mrow:active{transform:scale(.98)}
+.mrow .ic{width:20px;height:20px;color:var(--green)}
+.mrow b{font-size:13.5px;font-weight:600;flex:1;text-align:left}
+.mrow .end{font-size:12px;color:var(--ink3)}
+
+/* ============ 底部导航 ============ */
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:58px;z-index:50;
+  display:flex;align-items:center;justify-content:space-around;
+  background:rgba(250,247,239,.92);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line)}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;
+  min-width:72px;height:52px;justify-content:center;border-radius:14px;
+  color:var(--ink3);transition:color .2s}
+.tabbar button .ic{width:23px;height:23px}
+.tabbar button span{font-size:10.5px}
+.tabbar button.on{color:var(--green);font-weight:600}
+
+/* ============ toast / scrim / sheet / modal ============ */
+.toast{position:absolute;top:56px;left:50%;transform:translateX(-50%) translateY(-14px);
+  z-index:90;max-width:78%;padding:11px 17px;border-radius:12px;background:#2E2A24;color:#F4EFE3;
+  font-size:12.5px;line-height:1.5;box-shadow:0 8px 20px rgba(0,0,0,.25);opacity:0;
+  transition:opacity .28s, transform .28s;pointer-events:none;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.scrim{position:absolute;inset:0;background:rgba(30,26,20,.46);z-index:70;opacity:0;
+  visibility:hidden;transition:opacity .3s, visibility .3s;backdrop-filter:blur(2px)}
+.scrim.on{opacity:1;visibility:visible}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:80;background:var(--card);
+  border-radius:26px 26px 0 0;padding:10px 16px 20px;transform:translateY(105%);
+  transition:transform .4s cubic-bezier(.22,.8,.32,1);
+  box-shadow:0 -12px 30px rgba(0,0,0,.18)}
+.sheet.on{transform:translateY(0)}
+.sheet .grab{width:40px;height:4.5px;border-radius:3px;background:var(--line);margin:2px auto 14px}
+.sheet h3{font-family:var(--serif);font-size:16px;margin-bottom:4px}
+.sheet .sub{font-size:11.5px;color:var(--ink3);margin-bottom:12px}
+.loc-curr{display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;margin-bottom:8px;
+  border-radius:15px;background:rgba(62,107,78,.09);border:1px dashed rgba(62,107,78,.4);
+  font-size:13px;font-weight:600;color:var(--green);transition:background .2s}
+.loc-curr:active{background:rgba(62,107,78,.16)}
+.loc-curr .ic{width:18px;height:18px}
+.loc-list{display:flex;flex-direction:column;gap:2px;max-height:280px;overflow-y:auto}
+.lrow{display:flex;align-items:center;gap:11px;width:100%;padding:12px 10px;border-radius:13px;
+  text-align:left;transition:background .15s}
+.lrow:hover{background:#F2EEE0}
+.lrow .tag{font-family:var(--serif);font-size:15px;font-weight:700;width:30px;height:30px;
+  border-radius:9px;background:rgba(62,107,78,.1);color:var(--green);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lrow b{font-size:13.5px;display:block}
+.lrow small{font-size:10.5px;color:var(--ink3);display:block;margin-top:1px}
+.lrow .check{margin-left:auto;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:#FFF;flex-shrink:0}
+.lrow.on .check{background:var(--green);border-color:var(--green)}
+.lrow.on .check::after{content:"✓";font-size:12px;font-weight:700}
+.modal{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%) scale(.94);
+  z-index:80;width:84%;background:var(--card);border-radius:22px;padding:20px 18px;
+  text-align:center;opacity:0;visibility:hidden;transition:opacity .28s, transform .28s, visibility .28s;
+  box-shadow:0 22px 50px rgba(0,0,0,.28)}
+.modal.on{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+.modal h3{font-family:var(--serif);font-size:17px;margin-bottom:6px}
+.modal .sub{font-size:12px;color:var(--ink3);line-height:1.6;margin-bottom:15px}
+.cam{width:100%;height:150px;border-radius:16px;background:
+  radial-gradient(120px 90px at 30% 30%, rgba(217,164,65,.18), transparent),
+  linear-gradient(160deg,#3E6B4E,#2F5340);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  color:#F2EEDF;border:1px dashed rgba(255,255,255,.35);margin-bottom:15px}
+.cam .ic{width:36px;height:36px;opacity:.9}
+.cam p{font-size:12px;color:#CDE0CE}
+.modal .go{width:100%;padding:13px;border-radius:14px;background:var(--orange);color:#FFF;
+  font-size:14px;font-weight:600;transition:transform .15s}
+.modal .go:active{transform:scale(.97)}
+.modal .cancel{margin-top:9px;font-size:12px;color:var(--ink3);padding:8px}
+
+@media (max-width:430px){
+  .stage{padding:0}
+  .phone{width:100%;height:100vh;border-radius:0;border:none;max-width:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="statusbar"><span id="clock">15:30</span><span class="sb-r"><i class="bat"></i></span></div>
+
+    <main id="flow">
+      <header class="topbar">
+        <button class="loc" id="locBtn" aria-label="切换定位">
+          <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M128 24a88.1 88.1 0 0 0-88 88c0 31.4 14.5 64.7 42 96.3a254 254 0 0 0 41.5 38.3 8 8 0 0 0 9 0 254 254 0 0 0 41.5-38.3c27.5-31.6 42-64.9 42-96.3a88.1 88.1 0 0 0-88-88Zm0 166c-16.5-13-72-60.7-72-118a72 72 0 1 1 144 0c0 57.3-55.5 105-72 118Zm0-126a40 40 0 1 0 40 40 40 40 0 0 0-40-40Zm0 64a24 24 0 1 1 24-24 24 24 0 0 1-24 24Z"/></svg>
+          <span id="locName">安徽 · 怀远县</span>
+          <svg class="carat" viewBox="0 0 256 256" fill="currentColor"><path d="M213.7 101.7a8 8 0 0 0-11.4 0L128 175.9 53.7 101.7a8 8 0 0 0-11.4 11.3l80 80a8 8 0 0 0 11.4 0l80-80a8 8 0 0 0 0-11.3Z"/></svg>
+        </button>
+        <button class="bell" id="bellBtn" aria-label="通知">
+          <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M221.8 175.9C216.3 166.4 208 139.3 208 104a80 80 0 1 0-160 0c0 35.3-8.3 62.4-13.8 71.9A16 16 0 0 0 48 200h40.9a40 40 0 0 0 78.4 0H208a16 16 0 0 0 13.8-24.1ZM128 216a24 24 0 0 1-22.6-16h45.2A24 24 0 0 1 128 216Z"/></svg>
+          <span class="dot"></span>
+        </button>
+      </header>
+
+      <!-- ============ 首页 ============ -->
+      <section class="panel on" data-panel="home">
+        <article class="hero-card" id="heroCard">
+          <img class="hero-bg" src="https://aka.doubaocdn.com/s/UPdkkpKoXV" alt="皖北秋分丰收景象">
+          <div class="hero-scrim"></div>
+          <div class="hero-in">
+            <span class="hero-tag">今日节气 · <b>第十六节气</b></span>
+            <div class="hero-title">
+              <h1>秋分</h1>
+              <span class="seal">廿四</span>
+            </div>
+            <div class="hero-py">AUTUMN EQUINOX</div>
+            <p class="hero-desc" id="heroDesc"></p>
+            <div class="hero-chips" id="heroChips"></div>
+            <button class="hero-toggle" id="heroToggle" aria-expanded="false">展开三候 · 农事建议 <span class="arr">▾</span></button>
+            <div class="sanhou">
+              <div class="sanhou-in">
+                <b>秋分三候</b>
+                <p>一候雷始收声 · 二候蛰虫坯户 · 三候水始涸<br><span id="sanhouTip"></span></p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <div class="card weather" id="weatherCard"></div>
+        <div class="w-tip" id="weatherTip"></div>
+
+        <div class="task" id="taskBtn">
+          <span class="tic">
+            <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M208 56h-27.7L166.6 35.6A8 8 0 0 0 160 32H96a8 8 0 0 0-6.6 3.6L75.7 56H48a24 24 0 0 0-24 24v112a24 24 0 0 0 24 24h160a24 24 0 0 0 24-24V80a24 24 0 0 0-24-24Zm-80 32a44 44 0 1 1-44 44 44 44 0 0 1 44-44Zm0 72a28 28 0 1 0-28-28 28 28 0 0 0 28 28Z"/></svg>
+          </span>
+          <span style="flex:1;min-width:0">
+            <b id="taskTitle">今日农事提醒 · 3 条待办</b>
+            <p id="taskSub"></p>
+          </span>
+          <span class="go" id="camBtn">拍照识别</span>
+        </div>
+        <div class="tasklist" id="taskList"></div>
+
+        <div class="trade" id="tradeBtn">
+          <span class="t-ic"><svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M232 96a7.9 7.9 0 0 0-.3-2.2L217.4 43.6A16 16 0 0 0 202 32H54a16 16 0 0 0-15.4 11.6L24.3 93.8A7.9 7.9 0 0 0 24 96v16a40 40 0 0 0 16 32v72a8 8 0 0 0 8 8h160a8 8 0 0 0 8-8V144a40 40 0 0 0 16-32V96Z"/></svg></span>
+          <div style="flex:1;min-width:0">
+            <b>产销对接 · 今日收购价</b>
+            <div class="price" id="priceMain"></div>
+          </div>
+          <div class="t-go"><span>联系收购商</span><div class="m" id="priceNote"></div></div>
+        </div>
+
+        <div class="sec-t"><h3>接下来的节气</h3><span>农时不等人</span></div>
+        <div class="rail">
+          <div class="jq next">
+            <div class="date">10 月 08 日 · 16:48</div>
+            <div class="nm">寒露</div>
+            <div class="desc">露气寒冷，将凝未凝。晚稻抢收，油菜适期早播。</div>
+            <span class="badge">即将</span>
+          </div>
+          <div class="jq">
+            <div class="date">10 月 23 日</div>
+            <div class="nm">霜降</div>
+            <div class="desc">气肃而凝。红薯收获摘选，冬小麦适期播种。</div>
+          </div>
+          <div class="jq">
+            <div class="date">11 月 07 日</div>
+            <div class="nm">立冬</div>
+            <div class="desc">冬始。秋收冬藏，果园清园涂白，检修农机具。</div>
+          </div>
+        </div>
+
+        <div class="sec-t"><h3>老乡圈</h3><span id="circleTag">怀远 · 动态</span></div>
+        <div class="rows" id="circleList"></div>
+      </section>
+
+      <!-- ============ 农事工具箱 ============ -->
+      <section class="panel" data-panel="tools">
+        <div class="sec-t" style="margin-top:-2px"><h3>农事工具箱</h3><span>9 项常用工具</span></div>
+        <div class="toolgrid">
+          <button class="tool" data-tool="cal">
+            <span class="t-ic"><img src="assets/tool-cal.png" alt=""></span>
+            <div><b>农事日历</b><p>每日宜忌与农事安排</p></div>
+          </button>
+          <button class="tool" data-tool="pest">
+            <span class="t-ic"><img src="assets/tool-pest.png" alt=""></span>
+            <div><b>病虫害识别</b><p>拍照秒级识别防治</p></div>
+          </button>
+          <button class="tool" data-tool="trade">
+            <span class="t-ic"><img src="assets/tool-trade.png" alt=""></span>
+            <div><b>产销对接</b><p>行情报价与经纪人</p></div>
+          </button>
+          <button class="tool" data-tool="field">
+            <span class="t-ic"><img src="assets/tool-field.png" alt=""></span>
+            <div><b>我的田块</b><p>田块地图与种植档案</p></div>
+          </button>
+          <button class="tool" data-tool="weather">
+            <span class="t-ic"><img src="assets/tool-weather.png" alt=""></span>
+            <div><b>天气雷达</b><p>本县气象 · 晾晒指数</p></div>
+          </button>
+          <button class="tool" data-tool="machine">
+            <span class="t-ic"><img src="assets/tool-machine.png" alt=""></span>
+            <div><b>农机预约</b><p>机收耕整一键约</p></div>
+          </button>
+          <button class="tool" data-tool="subsidy">
+            <span class="t-ic"><img src="assets/tool-subsidy.png" alt=""></span>
+            <div><b>补贴查询</b><p>惠农政策速查</p></div>
+          </button>
+          <button class="tool" data-tool="expert">
+            <span class="t-ic"><img src="assets/tool-expert.png" alt=""></span>
+            <div><b>专家问答</b><p>线上农技专家答疑</p></div>
+          </button>
+          <button class="tool" data-tool="supply">
+            <span class="t-ic"><img src="assets/tool-supply.png" alt=""></span>
+            <div><b>农资参考</b><p>种子化肥行情参考</p></div>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============ 学堂 ============ -->
+      <section class="panel" data-panel="school">
+        <div class="sec-t" style="margin-top:-2px"><h3>农技学堂</h3><span>1200+ 门公开课</span></div>
+        <div class="course-top" id="recCourse" style="display:none"></div>
+        <div class="chips" id="chips">
+          <button class="on" data-cat="全部">全部</button>
+          <button data-cat="种植">种植</button>
+          <button data-cat="养殖">养殖</button>
+          <button data-cat="园艺">园艺</button>
+          <button data-cat="农机">农机</button>
+          <button data-cat="政策">政策</button>
+        </div>
+        <div class="courses" id="courseList"></div>
+      </section>
+
+      <!-- ============ 我的 ============ -->
+      <section class="panel" data-panel="me">
+        <div class="me-card">
+          <div class="me-top">
+            <span class="av">陈</span>
+            <div style="flex:1">
+              <b>陈守田 <span class="me-badge">已认证</span></b>
+              <p id="meRegion">怀远县荆山镇 · 种粮大户</p>
+            </div>
+          </div>
+          <div class="me-stats">
+            <div><b>3</b><span>我的田块</span></div>
+            <div><b>128</b><span>农事记录</span></div>
+            <div><b>24</b><span>收藏课程</span></div>
+          </div>
+        </div>
+        <div class="mlist">
+          <button class="mrow" data-tip="已打开我的田块地图">
+            <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M247.6 47.9a8 8 0 0 0-7.5-7.5c-51.8-3-93.3 12.7-111.2 42.2-11.8 19.5-11.8 43.2-.2 65.7a71.3 71.3 0 0 0-14.2 27L98.3 159c7.8-16.3 7.5-33.3-1-47.5C84.1 89.7 53.7 78.1 15.9 80.3a8 8 0 0 0-7.5 7.5c-2.3 37.8 9.5 68.3 31.3 81.5a45.8 45.8 0 0 0 23.7 6.7 54.6 54.6 0 0 0 23.6-5.7l25 25V224a8 8 0 0 0 16 0v-29.5a55.6 55.6 0 0 1 12.3-35 73.9 73.9 0 0 0 33.3 8.4 60.9 60.9 0 0 0 31.8-8.8c27.7-16.6 43.7-58.6 40.2-112.2Z"/></svg>
+            <b>我的田块</b><span class="end">3 块 ›</span>
+          </button>
+          <button class="mrow" data-tip="农事日历已打开">
+            <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M208 32h-24v-8a8 8 0 0 0-16 0v8H88v-8a8 8 0 0 0-16 0v8H48a16 16 0 0 0-16 16v160a16 16 0 0 0 16 16h160a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16ZM72 48v8a8 8 0 0 0 16 0v-8h80v8a8 8 0 0 0 16 0v-8h24v32H48V48Z"/></svg>
+            <b>农事日历</b><span class="end">3 条提醒 ›</span>
+          </button>
+          <button class="mrow" data-tip="消息中心">
+            <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M221.8 175.9C216.3 166.4 208 139.3 208 104a80 80 0 1 0-160 0c0 35.3-8.3 62.4-13.8 71.9A16 16 0 0 0 48 200h40.9a40 40 0 0 0 78.4 0H208a16 16 0 0 0 13.8-24.1Z"/></svg>
+            <b>消息通知</b><span class="end">›</span>
+          </button>
+          <button class="mrow" data-tip="设置">
+            <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M128 88a40 40 0 1 0 40 40 40 40 0 0 0-40-40Zm0 64a24 24 0 1 1 24-24 24 24 0 0 1-24 24Z"/></svg>
+            <b>设置</b><span class="end">›</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar">
+      <button class="on" data-go="home">
+        <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M219.3 108.7l-80-80a16 16 0 0 0-22.6 0l-80 80A15.9 15.9 0 0 0 32 120v96a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-56h32v56a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8V120a15.9 15.9 0 0 0-14.7-11.3Z"/></svg>
+        <span>首页</span>
+      </button>
+      <button data-go="tools">
+        <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M96 88V72a32 32 0 0 1 64 0v16"/><path d="M40 88h176a8 8 0 0 1 8 8v112a8 8 0 0 1-8 8H40a8 8 0 0 1-8-8V96a8 8 0 0 1 8-8Z"/><path d="M32 152h192"/></svg>
+        <span>工具</span>
+      </button>
+      <button data-go="school">
+        <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M232 48h-72a40 40 0 0 0-32 16A40 40 0 0 0 96 48H24a8 8 0 0 0-8 8v144a8 8 0 0 0 8 8h72a24 24 0 0 1 24 24 8 8 0 0 0 16 0 24 24 0 0 1 24-24h72a8 8 0 0 0 8-8V56a8 8 0 0 0-8-8Z"/></svg>
+        <span>学堂</span>
+      </button>
+      <button data-go="me">
+        <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M230.9 212c-15.2-26.3-38.7-45.2-66.1-54.2a72 72 0 1 0-73.7 0c-27.1 9-50.6 27.9-65.9 54.2a8 8 0 1 0 13.9 8c18.8-32.6 52.1-52.1 89-52.1s70.2 19.5 89 52.1a8 8 0 1 0 13.8-8ZM72 96a56 56 0 1 1 56 56 56 56 0 0 1-56-56Z"/></svg>
+        <span>我的</span>
+      </button>
+    </nav>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- 工具详情页 -->
+    <div class="detail" id="detailView">
+      <div class="detail-top">
+        <button class="back" id="detailBack" aria-label="返回">
+          <svg class="ic" viewBox="0 0 256 256" fill="none"><path d="M224 128H32M88 64l-64 64 64 64" stroke="currentColor" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <b id="detailTitle">农事日历</b>
+        <span class="d-region" id="detailRegion"></span>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+
+    <!-- 定位切换弹层 -->
+    <div class="sheet" id="locSheet" role="dialog" aria-label="切换定位">
+      <div class="grab"></div>
+      <h3>切换定位</h3>
+      <p class="sub">农事建议、天气、产销与老乡圈将跟随地区更新</p>
+      <button class="loc-curr" id="locCurr">
+        <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M128 24a88.1 88.1 0 0 0-88 88c0 31.4 14.5 64.7 42 96.3a254 254 0 0 0 41.5 38.3 8 8 0 0 0 9 0 254 254 0 0 0 41.5-38.3c27.5-31.6 42-64.9 42-96.3a88.1 88.1 0 0 0-88-88Zm0 166c-16.5-13-72-60.7-72-118a72 72 0 1 1 144 0c0 57.3-55.5 105-72 118Zm0-126a40 40 0 1 0 40 40 40 40 0 0 0-40-40Zm0 64a24 24 0 1 1 24-24 24 24 0 0 1-24 24Z"/></svg>
+        使用当前位置 · 怀远县
+      </button>
+      <div class="loc-list" id="locList"></div>
+    </div>
+
+    <!-- 拍照识别弹窗 -->
+    <div class="modal" id="camModal" role="dialog" aria-label="拍照识别病虫害">
+      <h3>拍照识别病虫害</h3>
+      <p class="sub">对准叶片或果实拍摄，AI 秒级识别并给出防治方案</p>
+      <div class="cam">
+        <svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M208 56h-27.7L166.6 35.6A8 8 0 0 0 160 32H96a8 8 0 0 0-6.6 3.6L75.7 56H48a24 24 0 0 0-24 24v112a24 24 0 0 0 24 24h160a24 24 0 0 0 24-24V80a24 24 0 0 0-24-24Zm-80 32a44 44 0 1 1-44 44 44 44 0 0 1 44-44Zm0 72a28 28 0 1 0-28-28 28 28 0 0 0 28 28Z"/></svg>
+        <p>拍摄作物叶片 / 果实</p>
+      </div>
+      <button class="go" id="camGo">开始识别</button>
+      <button class="cancel" id="camCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============ 数据 ============ */
+var REGIONS = {
+  huaiyuan:{
+    name:"怀远县", city:"安徽 · 蚌埠市", tag:"石榴之乡", mark:"怀",
+    weather:{kind:"sun", cond:"多云转晴", temp:24, hi:27, lo:16, hum:62, wind:"北风 2 级", rain:10},
+    tip:"今日宜晚稻收割与石榴分批采收",
+    desc:"阴阳相半，昼夜均而寒暑平。晚稻收晒正当时，石榴宜分批采收。",
+    chips:["晚稻收晒","石榴采收","冬油菜播种"],
+    sanhou:"抢抓晴好天气收割晚稻，脱粒后及时薄摊勤翻；石榴分期采收，选着色充分者先摘；冬油菜适时播种，墒情不足处浇出苗水。",
+    tasks:["石榴裂果监测：近期昼夜温差大，注意控水防裂","稻飞虱查报窗口：晚稻田穗期虫量监测"],
+    price:{name:"怀远石榴", val:"4.2", unit:"元/斤", chg:"+0.2"},
+    rec:{img:"https://aka.doubaocdn.com/s/yBwV5JjVVK", title:"石榴坐果期如何减少裂果", org:"怀远县农技推广中心 · 本县精选"},
+    circle:[
+      {av:"陈", cls:"g1", who:"陈守田 · 荆山镇 · 石榴 8.6 亩", tt:"今年的石榴裂果比去年少了两成，果然是疏花疏果做到位了。", like:"36 · 2 小时前"},
+      {av:"李", cls:"g2", who:"李淑兰 · 找郢乡 · 稻虾共作 12 亩", tt:"秋分后水位降到滩面以下，小虾子长势正好。", like:"21 · 5 小时前"},
+      {av:"王", cls:"g3", who:"王新发 · 龙亢农场 · 小麦良种示范", tt:"农技站今天来测了土壤墒情，说这周播麦正合适。", like:"12 · 昨天"}
+    ]
+  },
+  bengbu:{
+    name:"蚌埠市", city:"安徽 · 淮畔农都", tag:"淮畔农都", mark:"蚌",
+    weather:{kind:"sun", cond:"晴", temp:23, hi:26, lo:15, hum:55, wind:"东南风 3 级", rain:5},
+    tip:"今日宜大棚通风换气与草莓定植",
+    desc:"阴阳相半，昼夜均而寒暑平。设施蔬菜换茬育苗，草莓苗定植正当时。",
+    chips:["蔬菜换茬","草莓定植","水稻收割"],
+    sanhou:"大棚蔬菜及时换茬，高温闷棚后翻地晒垡；草莓苗带土定植、浇透缓苗水；露地水稻抢晴收割，防穗上发芽。",
+    tasks:["大棚温湿度调控：午间通风降湿，防灰霉病发生","草莓苗缓苗观察：定植后一周查补苗"],
+    price:{name:"设施草莓", val:"12", unit:"元/斤", chg:"-0.3"},
+    rec:{img:"https://aka.doubaocdn.com/s/vq7zmU7poh", title:"设施草莓高产定植要点", org:"市农技推广中心 · 本城精选"},
+    circle:[
+      {av:"赵", cls:"g2", who:"赵明霞 · 淮上区 · 草莓大棚 5 座", tt:"今天定植第三棚草莓，苗子壮实，浇透缓苗水了。", like:"18 · 3 小时前"},
+      {av:"孙", cls:"g1", who:"孙建国 · 马城镇 · 蔬菜合作社", tt:"闷棚结束翻地晒垡，下茬莴笋已经育上苗。", like:"9 · 6 小时前"},
+      {av:"吴", cls:"g4", who:"吴海燕 · 长青乡 · 水稻 18 亩", tt:"趁着天晴把稻子收完，秸秆直接还田省心。", like:"15 · 昨天"}
+    ]
+  },
+  wuhe:{
+    name:"五河县", city:"安徽 · 蚌埠市", tag:"水乡蟹肥", mark:"五",
+    weather:{kind:"cloud", cond:"多云", temp:22, hi:25, lo:15, hum:70, wind:"东北风 2 级", rain:20},
+    tip:"今日宜螃蟹起捕与稻谷归仓",
+    desc:"阴阳相半，昼夜均而寒暑平。稻谷归仓蟹正肥，小麦备播莫推迟。",
+    chips:["水稻收割","螃蟹捕捞","小麦备播"],
+    sanhou:"水稻抢晴收割归仓，秸秆及时粉碎还田；河蟹起捕分级上市，塘口留足种蟹；小麦备播整地，底肥按测土配方施足。",
+    tasks:["螃蟹起捕分级：公母分拣、防爬逃","塘口水位管理：起捕期保持稳定，防应激"],
+    price:{name:"五河螃蟹", val:"45", unit:"元/斤", chg:"+1.5"},
+    rec:{img:"https://aka.doubaocdn.com/s/KVCxdnwfjA", title:"稻田养蟹水质管理", org:"县水产技术站 · 本县精选"},
+    circle:[
+      {av:"高", cls:"g1", who:"高立云 · 沱湖乡 · 螃蟹塘口 30 亩", tt:"今晚起第一网蟹，膏满黄肥，收购商电话都打爆了。", like:"42 · 1 小时前"},
+      {av:"钱", cls:"g3", who:"钱梅 · 双忠庙镇 · 水稻制种", tt:"种子稻单独晒、单独存，明年不愁好种源。", like:"11 · 4 小时前"},
+      {av:"邱", cls:"g5", who:"邱国强 · 头铺镇 · 小麦备播", tt:"塘口边上小麦整地，肥已备好，就等墒情。", like:"8 · 昨天"}
+    ]
+  },
+  guzhen:{
+    name:"固镇县", city:"安徽 · 蚌埠市", tag:"花生大县", mark:"固",
+    weather:{kind:"sun", cond:"晴间多云", temp:24, hi:27, lo:16, hum:58, wind:"西风 2 级", rain:5},
+    tip:"今日宜花生晾晒翻场与玉米归仓",
+    desc:"阴阳相半，昼夜均而寒暑平。花生晒干归仓忙，玉米机收晾晒中。",
+    chips:["花生收晒","玉米晾晒","肉牛秋防"],
+    sanhou:"花生及时摘果晾晒，防霉防鼠入库；玉米机收后抢墒翻整，为小麦播种做准备；肉牛秋季防疫集中开展。",
+    tasks:["花生霉变检查：雨前及时苫盖翻场","肉牛秋季防疫：口蹄疫等疫苗补免"],
+    price:{name:"固镇花生", val:"3.6", unit:"元/斤", chg:"持平"},
+    rec:{img:"https://aka.doubaocdn.com/s/EDPNJYQrKg", title:"花生仓储防霉技术", org:"县粮油站 · 本县精选"},
+    circle:[
+      {av:"刘", cls:"g1", who:"刘广田 · 任桥镇 · 花生 80 亩", tt:"花生摘完正在晒场，晚上记得苫盖防露。", like:"28 · 2 小时前"},
+      {av:"张", cls:"g4", who:"张翠英 · 湖沟镇 · 肉牛 26 头", tt:"秋季防疫今天做完，牛舍消毒也安排了。", like:"17 · 6 小时前"},
+      {av:"李", cls:"g2", who:"李长富 · 王庄镇 · 玉米机收", tt:"机收一天顶我过去干五天，秸秆粉碎还田。", like:"23 · 昨天"}
+    ]
+  },
+  fengyang:{
+    name:"凤阳县", city:"安徽 · 滁州市", tag:"贡米之乡", mark:"凤",
+    weather:{kind:"cloud", cond:"阴转多云", temp:21, hi:24, lo:14, hum:66, wind:"东北风 3 级", rain:30},
+    tip:"今日宜贡米开镰与油菜移栽",
+    desc:"阴阳相半，昼夜均而寒暑平。贡米开镰粒归仓，油菜移栽接茬忙。",
+    chips:["贡米开镰","油菜移栽","小麦整地"],
+    sanhou:"贡米成熟及时开镰，抢晴天晒干入库；油菜壮苗移栽，施足基肥；小麦整地深耕晒垡，灭茬除草。",
+    tasks:["稻谷烘干调度：抢晴晾晒，水分降到 14% 内","油菜苗床管理：间苗定苗，防高脚苗"],
+    price:{name:"凤阳贡米", val:"3.8", unit:"元/斤", chg:"+0.1"},
+    rec:{img:"https://aka.doubaocdn.com/s/iFeoe2Vza0", title:"贡米品种提纯复壮", org:"县农科所 · 本县精选"},
+    circle:[
+      {av:"马", cls:"g2", who:"马道明 · 小溪河镇 · 贡米基地 60 亩", tt:"新米开镰，颗粒饱满，米贩子已经进村。", like:"31 · 3 小时前"},
+      {av:"何", cls:"g4", who:"何秀芹 · 总铺镇 · 油菜育苗", tt:"苗床间苗定苗，水肥跟上，月底就能移栽。", like:"13 · 5 小时前"},
+      {av:"周", cls:"g5", who:"周传宝 · 大庙镇 · 小麦整地", tt:"深耕晒垡一周，就等播种机进场。", like:"10 · 昨天"}
+    ]
+  },
+  mingguang:{
+    name:"明光市", city:"安徽 · 滁州市", tag:"水产粮仓", mark:"明",
+    weather:{kind:"rain", cond:"小雨转多云", temp:20, hi:23, lo:13, hum:75, wind:"东北风 3 级", rain:40},
+    tip:"今日宜鱼塘轮捕与水稻扫尾",
+    desc:"阴阳相半，昼夜均而寒暑平。稻谷收完鱼满塘，油菜育苗备移栽。",
+    chips:["水稻扫尾","鱼塘起捕","油菜育苗"],
+    sanhou:"晚稻扫尾抢收，防倒伏霉变；鱼塘轮捕上市，加强越冬前肥水管理；油菜育苗炼苗，适龄移栽。",
+    tasks:["鱼塘增氧检查：阴雨前提前开启增氧机","油菜苗期炼苗：控水蹲苗，提高抗寒力"],
+    price:{name:"明光草鱼", val:"6.8", unit:"元/斤", chg:"-0.2"},
+    rec:{img:"https://aka.doubaocdn.com/s/w2zDhcnN5U", title:"鱼塘秋末越冬管理", org:"市水产站 · 本城精选"},
+    circle:[
+      {av:"郑", cls:"g1", who:"郑树发 · 女山湖 · 精养鱼塘 45 亩", tt:"草鱼轮捕上市，网箱小鱼过塘分养。", like:"26 · 4 小时前"},
+      {av:"蒋", cls:"g4", who:"蒋大年 · 石坝镇 · 水稻 32 亩", tt:"晚稻扫尾收割，边收边晒边入库。", like:"19 · 7 小时前"},
+      {av:"胡", cls:"g3", who:"胡传亮 · 明东街道 · 油菜育苗", tt:"苗龄 40 天，炼苗三天后移栽大田。", like:"14 · 昨天"}
+    ]
+  }
+};
+
+var COURSES = [
+  {img:"https://aka.doubaocdn.com/s/yBwV5JjVVK", t:"石榴坐果期如何减少裂果", o:"怀远县农技推广中心 · 3.2 万人学过", d:"18 分钟", cat:"园艺"},
+  {img:"https://aka.doubaocdn.com/s/iFeoe2Vza0", t:"晚稻收割后土壤怎么养", o:"土壤肥料站 · 2.7 万人学过", d:"24 分钟", cat:"种植"},
+  {img:"https://aka.doubaocdn.com/s/DrKn6G9zFm", t:"冬油菜直播与免耕要点", o:"省农科院作物所 · 1.9 万人学过", d:"15 分钟", cat:"种植"},
+  {img:"https://aka.doubaocdn.com/s/E82PpJUMGw", t:"秋分后果园清园与涂白", o:"园艺作物站 · 8600 人学过", d:"12 分钟", cat:"园艺"},
+  {img:"https://aka.doubaocdn.com/s/KVCxdnwfjA", t:"稻田养蟹水质管理", o:"水产技术站 · 1.1 万人学过", d:"16 分钟", cat:"养殖"},
+  {img:"https://aka.doubaocdn.com/s/v0KWcQrjUc", t:"秸秆还田与农机调配", o:"农机推广站 · 7600 人学过", d:"10 分钟", cat:"农机"},
+  {img:"https://aka.doubaocdn.com/s/RVhSrUy0LU", t:"秋播惠农补贴申领指南", o:"县农业农村局 · 1.5 万人学过", d:"8 分钟", cat:"政策"}
+];
+
+var W_ICON = {
+  sun:'<svg class="ic" viewBox="0 0 256 256" fill="currentColor"><circle cx="128" cy="128" r="52"/><path d="M128 24v24M128 208v24M24 128h24M208 128h24M48.2 48.2l17 17M190.8 190.8l17 17M48.2 207.8l17-17M190.8 65.2l17-17" stroke="currentColor" stroke-width="16" stroke-linecap="round"/></svg>',
+  cloud:'<svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M176 80a80 80 0 0 0-155.8 8 56 56 0 0 0-12.2 110.6A8 8 0 0 0 16 200h152a56 56 0 0 0 8-120Z" opacity=".95"/><path d="M232 144a32 32 0 0 1-32 32H88" stroke="currentColor" stroke-width="16" stroke-linecap="round" fill="none"/></svg>',
+  rain:'<svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M176 72a80 80 0 0 0-155.8 8 56 56 0 0 0-12.2 110.6A8 8 0 0 0 16 192h152a56 56 0 0 0 8-120Z" opacity=".9"/><path d="M96 208l-12 24M144 208l-12 24M192 208l-12 24" stroke="currentColor" stroke-width="14" stroke-linecap="round"/></svg>'
+};
+
+/* ============ 详情数据 ============ */
+var CAL3 = [
+  {seg:"上旬 · 寒露前（10.01–10.10）", items:["晚稻抢晴收割，脱粒后薄摊勤翻，防穗上发芽","石榴分期采收，选着色充分、果皮松软者先摘","冬油菜抢墒播种，墒情不足处浇出苗水"]},
+  {seg:"中旬 · 寒露至霜降（10.11–10.20）", items:["晚稻收尾归仓，秸秆粉碎还田","小麦整地备播，按测土配方施足底肥","果园清园，刮除病斑并集中烧毁"]},
+  {seg:"下旬 · 霜降前后（10.21–10.31）", items:["红薯收获摘选，剔除烂薯伤薯后入窖","冬小麦适期播种，控制播深与播量","农机具检修入库，果树树干涂白防冻"]}
+];
+var PESTS = [
+  {n:"稻飞虱", crop:"水稻 · 穗期", sym:"叶片基部和穗部群集刺吸，田间出现“黄塘”，后期成片枯黄倒伏。", fix:"用噻嗪酮或吡蚜酮兑水喷雾，药液打透稻株中下部，选早晨或傍晚施药。"},
+  {n:"石榴褐斑病", crop:"石榴 · 叶果", sym:"叶片出现褐色圆形病斑，果面形成黑褐色凹陷斑，雨后蔓延快。", fix:"及时清除病叶病果并深埋，苯醚甲环唑与代森锰锌轮换喷施，注意通风透光。"},
+  {n:"稻瘟病", crop:"晚稻 · 穗颈", sym:"穗颈变褐缢缩，形成白穗，谷粒空瘪。", fix:"破口期用三环唑或稻瘟灵预防，控氮增钾，田间水层干湿交替。"},
+  {n:"油菜根肿病", crop:"油菜 · 苗期", sym:"主根肿大畸形呈纺锤形，叶片萎蔫发黄，重者整株枯死。", fix:"苗床轮作换茬，石灰调节土壤酸度，移栽前剔除病苗。"},
+  {n:"瓜蚜", crop:"秋菜 · 嫩叶", sym:"嫩叶背面群集为害，叶片卷曲皱缩，蜜露诱发煤污病。", fix:"黄板诱杀有翅蚜，吡虫啉低毒喷雾，保护瓢虫等天敌。"}
+];
+var DAYS = [
+  {d:"明天 · 10 月 08 日", t:"晴", tem:"15 – 26°", idx:"晾晒适宜"},
+  {d:"后天 · 10 月 09 日", t:"多云", tem:"16 – 24°", idx:"可晾晒"},
+  {d:"大后天 · 10 月 10 日", t:"小雨", tem:"14 – 21°", idx:"不宜晾晒"}
+];
+var MACHS = [
+  {n:"联合收割机", s:"水稻机收", p:"80 元/亩", a:"档期充足"},
+  {n:"旋耕机", s:"耕整作业", p:"55 元/亩", a:"可约 4 台"},
+  {n:"植保无人机", s:"飞防植保", p:"12 元/亩", a:"明日可约"},
+  {n:"秸秆打捆机", s:"打捆离田", p:"30 元/亩", a:"提前 2 天约"}
+];
+var SUBS = [
+  {n:"小麦良种补贴", s:"30 元/亩 · 秋播季可申领", st:"可申领"},
+  {n:"农机购置补贴", s:"按机具价格 30% 补贴", st:"进行中"},
+  {n:"耕地地力保护补贴", s:"本年度已公示，等发放", st:"已公示"},
+  {n:"稻谷生产者补贴", s:"9 月底发放到一卡通", st:"已发放"}
+];
+var EXPERTS = [
+  {n:"王兴农", f:"水稻 · 小麦栽培", on:true},
+  {n:"李果树", f:"石榴 · 苹果果园管理", on:true},
+  {n:"高渔", f:"河蟹 · 鱼类养殖", on:true},
+  {n:"周植保", f:"大田病虫害防治", on:false}
+];
+var SUPPLIES = [
+  {n:"尿素", s:"50 kg / 袋", p:"2350 元/吨", chg:"+20"},
+  {n:"复合肥（45% 氯基）", s:"25 kg / 袋", p:"128 元/袋", chg:"持平"},
+  {n:"杂交稻种", s:"1 kg / 袋", p:"8.5 元/斤", chg:"-0.2"},
+  {n:"小麦良种（烟农 19）", s:"1 kg / 袋", p:"6.2 元/斤", chg:"+0.1"},
+  {n:"白地膜", s:"1 m × 10 m", p:"12 元/卷", chg:"持平"},
+  {n:"吡虫啉", s:"100 g / 瓶", p:"18 元/瓶", chg:"-1"}
+];
+var FIELDS = [
+  {n:"荆山南坡", a:"石榴 8.6 亩", st:"采收期", cls:"warn", rec:"近 7 日 12 条农事记录"},
+  {n:"芡河湾", a:"晚稻 12 亩", st:"收割中", cls:"", rec:"近 7 日 9 条农事记录"},
+  {n:"新桥圩", a:"冬油菜 4 亩", st:"已播种", cls:"done", rec:"近 7 日 6 条农事记录"}
+];
+
+/* ============ 状态 ============ */
+var state = { tab:"home", region:"huaiyuan", chip:"全部", detail:null, toastTimer:null };
+
+/* ============ DOM ============ */
+var $ = function(id){ return document.getElementById(id); };
+var locBtn=$("locBtn"), locSheet=$("locSheet"), scrim=$("scrim"), toast=$("toast");
+
+/* ============ 定位切换 ============ */
+function renderLocSheet(){
+  var list=$("locList"), html="";
+  for(var k in REGIONS){
+    var r=REGIONS[k];
+    html+='<button class="lrow'+(state.region===k?" on":"")+'" data-key="'+k+'">'+
+      '<span class="tag">'+r.mark+'</span>'+
+      '<span><b>'+r.name+'</b><small>'+r.city+' · '+r.tag+'</small></span>'+
+      '<span class="check"></span></button>';
+  }
+  list.innerHTML=html;
+  $("locCurr").lastChild.textContent = "使用当前位置 · 怀远县";
+}
+function openLoc(){
+  locSheet.classList.add("on");
+  scrim.classList.add("on");
+  locBtn.classList.add("open");
+  renderLocSheet();
+}
+function closeLoc(){
+  locSheet.classList.remove("on");
+  scrim.classList.remove("on");
+  locBtn.classList.remove("open");
+}
+
+/* ============ 地区联动渲染 ============ */
+function renderRegion(){
+  var r=REGIONS[state.region];
+  $("locName").textContent = "安徽 · " + r.name;
+  $("heroDesc").textContent = r.desc;
+  $("heroChips").innerHTML = r.chips.map(function(c){return "<span>"+c+"</span>";}).join("");
+  $("sanhouTip").textContent = r.sanhou;
+  $("circleTag").textContent = r.name + " · 动态";
+  $("meRegion").textContent = r.name + " · 荆山镇 · 种粮大户";
+
+  /* 天气 */
+  $("weatherCard").innerHTML =
+    '<div class="w-main">'+
+      '<span class="w-icon">'+W_ICON[r.weather.kind]+'</span>'+
+      '<div><div class="w-temp">'+r.weather.temp+'°</div>'+
+      '<div class="w-cond">'+r.weather.cond+'</div>'+
+      '<div class="w-hilo">最高 '+r.weather.hi+'° · 最低 '+r.weather.lo+'°</div></div>'+
+    '</div>'+
+    '<div class="w-inds">'+
+      '<div class="w-ind"><span class="k">湿度</span><span class="v">'+r.weather.hum+'%</span></div>'+
+      '<div class="w-ind"><span class="k">风力</span><span class="v">'+r.weather.wind.split(" ")[0]+'</span></div>'+
+      '<div class="w-ind"><span class="k">降雨</span><span class="v">'+r.weather.rain+'%</span></div>'+
+    '</div>';
+  $("weatherTip").innerHTML = "<b>农事指数</b>　" + r.tip;
+
+  /* 提醒 */
+  $("taskTitle").textContent = "今日农事提醒 · " + r.tasks.length + " 条待办";
+  $("taskSub").textContent = r.tasks[0].split("：")[0] + " · " + r.tasks[1].split("：")[0];
+  $("taskList").innerHTML = r.tasks.map(function(t,i){
+    var k=t.split("：");
+    return '<div class="trow"><span>'+t+'</span><span class="tg">'+(i===0?"重点":"待办")+'</span></div>';
+  }).join("");
+
+  /* 产销 */
+  $("priceMain").innerHTML = r.price.name+' <small>'+r.price.val+'</small> <small style="font-size:12px;color:var(--ink2)">'+r.price.unit+'</small>'+
+    '<span class="chg">较昨日 '+r.price.chg+'</span>';
+  $("priceNote").textContent = r.price.name + "产地直供";
+
+  /* 学堂精选 */
+  $("recCourse").style.display = "";
+  $("recCourse").innerHTML =
+    '<img class="ct-img" src="'+r.rec.img+'" alt="课程封面" loading="lazy">'+
+    '<div><b>'+r.rec.title+'</b><p>'+r.rec.org+'</p><div class="tagline">今日 · 本地区精选课程</div></div>';
+
+  /* 老乡圈 */
+  $("circleList").innerHTML = r.circle.map(function(c){
+    return '<div class="row"><span class="av '+c.cls+'">'+c.av+'</span>'+
+      '<div style="flex:1;min-width:0"><div class="who">'+c.who+'</div>'+
+      '<div class="tt">'+c.tt+'</div><div class="like">'+c.like+'</div></div></div>';
+  }).join("");
+}
+
+/* ============ 学堂渲染 ============ */
+function renderCourses(){
+  var list = COURSES.filter(function(c){ return state.chip==="全部" || c.cat===state.chip; });
+  $("courseList").innerHTML = list.length ? list.map(function(c){
+    return '<div class="course"><img src="'+c.img+'" alt="'+c.t+'" loading="lazy">'+
+      '<div class="b"><b>'+c.t+'</b><p>'+c.o+'</p></div>'+
+      '<span class="dur">'+c.d+'</span></div>';
+  }).join("") : '<div class="empty">该类课程整理中，先看看其他分类</div>';
+}
+
+/* ============ Toast ============ */
+function showToast(msg){
+  clearTimeout(state.toastTimer);
+  toast.textContent = msg;
+  toast.classList.add("on");
+  state.toastTimer = setTimeout(function(){ toast.classList.remove("on"); }, 1700);
+}
+
+/* ============ 工具详情 ============ */
+var DETAIL_BUILD = {
+  cal:function(r){
+    return '<div class="d-hero"><div class="big">'+r.name+' · 2026 年 10 月农事历</div>'+
+      '<p>当前节气 秋分（第十六节气），寒露将于 10 月 08 日 16:48 交节。今日农事指数：'+r.tip+'。</p>'+
+      '<div class="chips">'+r.chips.map(function(c){return "<span>"+c+"</span>";}).join("")+'</div></div>'+
+      CAL3.map(function(s){
+        return '<div class="seg"><b>'+s.seg+'</b><ul>'+s.items.map(function(i){return "<li>"+i+"</li>";}).join("")+'</ul></div>';
+      }).join("");
+  },
+  pest:function(){
+    return '<button class="cam-btn" data-act="cam"><svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M208 56h-27.7L166.6 35.6A8 8 0 0 0 160 32H96a8 8 0 0 0-6.6 3.6L75.7 56H48a24 24 0 0 0-24 24v112a24 24 0 0 0 24 24h160a24 24 0 0 0 24-24V80a24 24 0 0 0-24-24Zm-80 32a44 44 0 1 1-44 44 44 44 0 0 1 44-44Zm0 72a28 28 0 1 0-28-28 28 28 0 0 0 28 28Z"/></svg>拍照识别病虫害</button>'+
+      '<div class="d-sec">本季高发 · 识别图鉴</div>'+
+      PESTS.map(function(p){
+        return '<div class="pest"><div class="pt"><b>'+p.n+'</b><span class="tag">'+p.crop+'</span></div>'+
+          '<p class="sym"><b>症状：</b>'+p.sym+'</p><p class="fix"><b>防治：</b>'+p.fix+'</p></div>';
+      }).join("");
+  },
+  trade:function(){
+    var rows = Object.keys(REGIONS).map(function(k){
+      var r=REGIONS[k], cur = k===state.region;
+      return '<div class="price-row'+(cur?" cur":"")+'"><div><div class="nm">'+r.price.name+'</div>'+
+        '<div class="tag">'+r.name+(cur?" · 当前定位":"")+'</div></div>'+
+        '<div class="pv">'+r.price.val+' <small>'+r.price.unit+'</small></div>'+
+        '<span class="chg">'+r.price.chg+'</span></div>';
+    }).join("");
+    return '<div class="d-sec">今日行情 · 当前定位优先</div>'+rows+
+      '<button class="btn-full" data-msg="已发起收购询价，经纪人稍后联系您">联系经纪人报价</button>';
+  },
+  field:function(){
+    return '<div class="d-sec">我的田块 · 3 块</div>'+
+      FIELDS.map(function(f){
+        return '<div class="field" data-msg="已打开 '+f.n+' 田块详情"><div class="ft"><b>'+f.n+'</b>'+
+          '<span class="st '+f.cls+'">'+f.st+'</span></div><p>'+f.a+'</p><div class="rec">'+f.rec+'</div></div>';
+      }).join("");
+  },
+  weather:function(r){
+    return '<div class="d-hero"><div class="big">'+r.weather.cond+'　'+r.weather.temp+'°</div>'+
+      '<p>最高 '+r.weather.hi+'° · 最低 '+r.weather.lo+'°　湿度 '+r.weather.hum+'%　'+r.weather.wind+'　降雨概率 '+r.weather.rain+'%</p>'+
+      '<div class="chips"><span>农事指数：'+r.tip+'</span></div></div>'+
+      '<div class="d-sec">未来三天预报</div>'+
+      DAYS.map(function(d){
+        return '<div class="day"><b>'+d.d+'</b><span class="cond">'+d.t+'</span><span class="tem">'+d.tem+'</span>'+
+          '<span class="idx">'+d.idx+'</span></div>';
+      }).join("");
+  },
+  machine:function(r){
+    return '<div class="d-sec">'+r.name+' · 可预约农机</div>'+
+      MACHS.map(function(m){
+        return '<div class="m-row" data-msg="已预约 '+m.n+'（'+m.p+'）">'+
+          '<span class="mi"><svg class="ic" viewBox="0 0 256 256" fill="currentColor"><path d="M48 120h112v56H48a16 16 0 0 1-16-16v-24a16 16 0 0 1 16-16Z"/><circle cx="84" cy="176" r="22"/><circle cx="164" cy="176" r="22"/><path d="M160 120V88h20l24 32v32h-20"/></svg></span>'+
+          '<div><b>'+m.n+'</b><small>'+m.s+'</small></div>'+
+          '<div class="pm"><b>'+m.p+'</b><small>'+m.a+'</small></div></div>';
+      }).join("")+
+      '<button class="btn-full" data-msg="农机作业订单已提交，机手将电话确认时间">一键下单</button>';
+  },
+  subsidy:function(){
+    return '<div class="d-sec">惠农补贴 · 政策速查</div>'+
+      SUBS.map(function(s){
+        return '<div class="s-row" data-msg="已查看：'+s.n+'"><div><b>'+s.n+'</b><small>'+s.s+'</small></div>'+
+          '<span class="st2">'+s.st+'</span></div>';
+      }).join("")+
+      '<div class="qa"><textarea placeholder="输入想了解的补贴问题，如：今年小麦补贴怎么申领？"></textarea>'+
+      '<button class="send" data-msg="问题已提交，县农业农村局将答复">提交咨询</button></div>';
+  },
+  expert:function(){
+    return '<div class="d-sec">在线农技专家</div>'+
+      EXPERTS.map(function(e,i){
+        var avs=["王","李","高","周"], cls=["g1","g3","g4","g5"];
+        return '<div class="expert" data-msg="已发起咨询：'+e.n+' 专家">'+
+          '<span class="av '+cls[i]+'">'+avs[i]+'</span>'+
+          '<div><b>'+e.n+(e.on?'':' · 明日 9:00 在线')+'</b><small>'+e.f+'</small></div>'+
+          '<span class="dot2'+(e.on?"":" off")+'"></span></div>';
+      }).join("")+
+      '<div class="qa"><textarea placeholder="描述你的问题，如：石榴裂果怎么防？"></textarea>'+
+      '<button class="send" data-msg="问题已提交，专家将尽快回复">发送问题</button></div>';
+  },
+  supply:function(){
+    return '<div class="d-sec">农资行情 · 参考价</div>'+
+      SUPPLIES.map(function(s){
+        return '<div class="sup-row" data-msg="已收藏：'+s.n+'"><div><b>'+s.n+'</b><small>'+s.s+'</small></div>'+
+          '<div class="sp"><b>'+s.p+'</b><small>较昨日 '+s.chg+'</small></div></div>';
+      }).join("")+
+      '<button class="btn-full" data-msg="已生成农资清单，可到本地农资店询价">生成采购清单</button>';
+  }
+};
+function renderDetail(){
+  var k=state.detail; if(!k) return;
+  var r=REGIONS[state.region];
+  $("detailTitle").textContent = ({cal:"农事日历",pest:"病虫害识别",trade:"产销对接",field:"我的田块",weather:"天气雷达",machine:"农机预约",subsidy:"补贴查询",expert:"专家问答",supply:"农资参考"})[k];
+  $("detailRegion").textContent = "安徽 · " + r.name;
+  $("detailBody").innerHTML = DETAIL_BUILD[k](r);
+}
+function openDetail(k){
+  state.detail=k; renderDetail();
+  $("detailView").classList.add("on");
+  $("detailBody").scrollTop=0;
+}
+function closeDetail(){
+  if(!state.detail) return;
+  state.detail=null;
+  $("detailView").classList.remove("on");
+}
+
+/* ============ 面板切换 ============ */
+function go(tab){
+  closeDetail();
+  if(state.tab===tab) return;
+  state.tab=tab;
+  document.querySelectorAll(".panel").forEach(function(p){ p.classList.toggle("on", p.dataset.panel===tab); });
+  document.querySelectorAll(".tabbar button").forEach(function(b){ b.classList.toggle("on", b.dataset.go===tab); });
+  $("flow").scrollTop = 0;
+  if(!location.hash || location.hash !== "#"+tab) history.replaceState(null,"","#"+tab);
+}
+
+/* ============ 事件 ============ */
+locBtn.addEventListener("click", function(){ locSheet.classList.contains("on") ? closeLoc() : openLoc(); });
+scrim.addEventListener("click", function(){ closeLoc(); closeCam(); });
+document.getElementById("bellBtn").addEventListener("click", function(){ showToast("暂无新通知"); });
+$("locList").addEventListener("click", function(e){
+  var b = e.target.closest(".lrow"); if(!b) return;
+  state.region = b.dataset.key;
+  renderRegion(); closeLoc();
+  showToast("已切换到 " + REGIONS[state.region].name + "，内容已更新");
+});
+document.getElementById("locCurr").addEventListener("click", function(){
+  state.region = "huaiyuan"; renderRegion(); closeLoc();
+  showToast("已定位到怀远县");
+});
+
+/* hero 三候展开 */
+var heroCard=$("heroCard"), heroToggle=$("heroToggle");
+function toggleHero(force){
+  var open = typeof force==="boolean" ? force : !heroCard.classList.contains("exp");
+  heroCard.classList.toggle("exp", open);
+  heroToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  heroToggle.innerHTML = (open?"收起三候 ▴":"展开三候 · 农事建议 ▾");
+}
+heroToggle.addEventListener("click", function(e){ e.stopPropagation(); toggleHero(); });
+heroCard.addEventListener("click", function(e){
+  if(e.target.closest("button")) return; toggleHero();
+});
+
+/* 拍照识别 */
+var camModal=$("camModal");
+function openCam(){ camModal.classList.add("on"); scrim.classList.add("on"); }
+function closeCam(){ camModal.classList.remove("on"); if(!locSheet.classList.contains("on")) scrim.classList.remove("on"); }
+document.getElementById("camBtn").addEventListener("click", openCam);
+document.getElementById("taskBtn").addEventListener("click", openCam);
+document.getElementById("camGo").addEventListener("click", function(){ closeCam(); showToast("识别完成：石榴褐斑病 · 防治建议已生成"); });
+document.getElementById("camCancel").addEventListener("click", closeCam);
+
+/* 工具详情 */
+document.getElementById("detailBack").addEventListener("click", closeDetail);
+$("detailBody").addEventListener("click", function(e){
+  var t=e.target.closest("[data-act]");
+  if(t && t.dataset.act==="cam"){ openCam(); return; }
+  var m=e.target.closest("[data-msg]");
+  if(m){ showToast(m.dataset.msg); }
+});
+
+/* 工具 & 通用点击 */
+document.querySelectorAll(".tool").forEach(function(t){
+  t.addEventListener("click", function(){ openDetail(t.dataset.tool); });
+});
+document.querySelectorAll("[data-tip]").forEach(function(el){
+  el.addEventListener("click", function(){ showToast(el.dataset.tip); });
+});
+document.getElementById("tradeBtn").addEventListener("click", function(){
+  var r=REGIONS[state.region];
+  showToast("已发起 " + r.price.name + " 收购询价，稍后经纪人联系您");
+});
+document.getElementById("recCourse").addEventListener("click", function(){
+  showToast("已加入学习计划：" + REGIONS[state.region].rec.title);
+});
+$("courseList").addEventListener("click", function(e){
+  var c=e.target.closest(".course"); if(!c) return;
+  showToast("开始学习：" + c.querySelector(".b b").textContent);
+});
+document.getElementById("chips").addEventListener("click", function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  state.chip = b.dataset.cat;
+  document.querySelectorAll("#chips button").forEach(function(x){ x.classList.toggle("on", x===b); });
+  renderCourses();
+});
+
+/* tabbar & 工具跳转 */
+document.querySelectorAll(".tabbar button").forEach(function(b){
+  b.addEventListener("click", function(){ go(b.dataset.go); });
+});
+
+/* 时钟 */
+function tick(){
+  var d=new Date(), h=d.getHours(), m=d.getMinutes();
+  $("clock").textContent = (h<10?"0":"")+h+":"+(m<10?"0":"")+m;
+}
+setInterval(tick, 15000); tick();
+
+/* 初始化 */
+(function(){
+  var h=location.hash.replace("#","");
+  if(["home","tools","school","me"].indexOf(h)>-1){ state.tab=h; }
+  document.querySelectorAll(".panel").forEach(function(p){ p.classList.toggle("on", p.dataset.panel===state.tab); });
+  document.querySelectorAll(".tabbar button").forEach(function(b){ b.classList.toggle("on", b.dataset.go===state.tab); });
+  renderRegion();
+  renderCourses();
+})();
+</script>
+</body>
+</html>
